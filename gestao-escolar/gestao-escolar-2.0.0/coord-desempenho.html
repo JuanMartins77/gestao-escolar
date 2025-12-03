@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desempenho - Coordenador</title>
+    <link rel="stylesheet" href="css/coord-style.css">
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo-section">
+            <div class="logo-icon">🎓</div>
+            <h1 class="logo-text">EduGestão</h1>
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-name" id="userName">Coordenador</div>
+                <div class="user-role">Desempenho dos Alunos</div>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="btn-back">← Voltar</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>📊 Desempenho dos Alunos</h1>
+            <p>Análise de desempenho acadêmico</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" style="color: #10b981;">85%</div>
+                <div class="stat-label">Taxa de Aprovação</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: #059669;">7.5</div>
+                <div class="stat-label">Média Geral</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: #ef4444;">12</div>
+                <div class="stat-label">Alunos em Risco</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: #f59e0b;">92%</div>
+                <div class="stat-label">Frequência Média</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Filtros</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <select id="turmaFiltro" class="form-select">
+                    <option value="">Todas as turmas</option>
+                </select>
+                <select id="disciplinaFiltro" class="form-select">
+                    <option value="">Todas as disciplinas</option>
+                </select>
+                <select id="periodoFiltro" class="form-select">
+                    <option value="">Todos os períodos</option>
+                    <option value="1">1º Bimestre</option>
+                    <option value="2">2º Bimestre</option>
+                    <option value="3">3º Bimestre</option>
+                    <option value="4">4º Bimestre</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <h3 style="margin-bottom: 1rem;">Alunos com Baixo Desempenho</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aluno</th>
+                        <th>Turma</th>
+                        <th>Média</th>
+                        <th>Frequência</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="alunosTable">
+                    <tr><td colspan="6" class="loading">Carregando dados...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/coord-auth.js"></script>
+    <script>
+        let currentUser = null;
+
+        async function init() {
+            currentUser = await checkCoordAuth();
+            if (!currentUser) return;
+            document.getElementById('userName').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
+            loadDesempenho();
+        }
+
+        function loadDesempenho() {
+            const tbody = document.getElementById('alunosTable');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">Nenhum aluno com baixo desempenho no momento</td></tr>';
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

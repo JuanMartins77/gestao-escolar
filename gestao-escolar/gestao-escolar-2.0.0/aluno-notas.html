@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Notas - Aluno</title>
+    <link rel="stylesheet" href="css/aluno-style.css">
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo-section">
+            <div class="logo-icon">🎓</div>
+            <h1 class="logo-text">EduGestão</h1>
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-name" id="userName">Aluno</div>
+                <div class="user-role">Minhas Notas</div>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="btn-back">← Voltar</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>📝 Minhas Notas</h1>
+            <p>Acompanhe seu desempenho acadêmico</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="mediaGeral">0.0</div>
+                <div class="stat-label">Média Geral</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="melhorNota">0.0</div>
+                <div class="stat-label">Melhor Nota</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalDisciplinas">0</div>
+                <div class="stat-label">Disciplinas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="situacao">-</div>
+                <div class="stat-label">Situação</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Selecione o Período</h3>
+            <select id="periodoSelect" class="form-select" style="margin-top: 1rem;">
+                <option value="1">1º Bimestre</option>
+                <option value="2">2º Bimestre</option>
+                <option value="3">3º Bimestre</option>
+                <option value="4">4º Bimestre</option>
+            </select>
+        </div>
+
+        <div class="table-container">
+            <h3 style="margin-bottom: 1rem;">Boletim</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Disciplina</th>
+                        <th>Professor</th>
+                        <th>Nota</th>
+                        <th>Situação</th>
+                    </tr>
+                </thead>
+                <tbody id="notasTable">
+                    <tr><td colspan="4" class="loading">Carregando notas...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/aluno-auth.js"></script>
+    <script>
+        let currentUser = null;
+
+        async function init() {
+            currentUser = await checkAlunoAuth();
+            if (!currentUser) return;
+            document.getElementById('userName').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
+            loadNotas();
+        }
+
+        function loadNotas() {
+            const tbody = document.getElementById('notasTable');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: #64748b;">Nenhuma nota lançada ainda</td></tr>';
+            
+            document.getElementById('mediaGeral').textContent = '0.0';
+            document.getElementById('situacao').textContent = 'Regular';
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

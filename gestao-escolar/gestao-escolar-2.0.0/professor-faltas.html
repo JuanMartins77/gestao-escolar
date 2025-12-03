@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lançar Faltas - Professor</title>
+    <link rel="stylesheet" href="css/professor-style.css">
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo-section">
+            <div class="logo-icon">🎓</div>
+            <h1 class="logo-text">EduGestão</h1>
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-name" id="userName">Professor</div>
+                <div class="user-role">Lançar Faltas</div>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="btn-back">← Voltar</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>📅 Lançar Faltas</h1>
+            <p>Registre a presença dos alunos</p>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Carregando...</p>
+        </div>
+
+        <div id="content" style="display: none;">
+            <!-- Filtros -->
+            <div style="background: white; padding: 2rem; border-radius: 16px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">Turma</label>
+                        <select id="turmaSelect" class="form-select" onchange="loadAlunos()">
+                            <option value="">Selecione uma turma</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Data</label>
+                        <input type="date" id="dataSelect" class="form-input" onchange="loadAlunos()">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button onclick="marcarTodosPresentes()" class="btn-secondary" style="flex: 1;">✓ Marcar Todos Presentes</button>
+                    <button onclick="marcarTodosFaltosos()" class="btn-secondary" style="flex: 1;">✗ Marcar Todos Faltosos</button>
+                </div>
+            </div>
+
+            <!-- Lista de Alunos -->
+            <div id="chamadaContainer" style="display: none;">
+                <div class="table-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="color: #1e293b;">Chamada - <span id="turmaInfo"></span></h3>
+                        <button onclick="salvarFrequencias()" class="btn-primary">💾 Salvar Frequências</button>
+                    </div>
+                    <div id="alunosList" style="display: grid; gap: 1rem;">
+                        <!-- Alunos serão inseridos aqui -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="emptyState" class="empty-state">
+                <div class="empty-icon">📅</div>
+                <h3>Selecione uma turma e data</h3>
+                <p>Escolha a turma e a data para fazer a chamada</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/professor-auth.js"></script>
+    <script>
+        let currentUser = null;
+        let turmas = [];
+
+        async function init() {
+            currentUser = await checkProfessorAuth();
+            if (!currentUser) return;
+
+            document.getElementById('userName').textContent = 
+                `${currentUser.first_name} ${currentUser.last_name}`;
+
+            // Definir data de hoje
+            document.getElementById('dataSelect').valueAsDate = new Date();
+
+            await loadTurmas();
+        }
+
+        async function loadTurmas() {
+            try {
+                const response = await api.getTurmas();
+                turmas = response.results || [];
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+                const select = document.getElementById('turmaSelect');
+                turmas.forEach(turma => {
+                    const option = document.createElement('option');
+                    option.value = turma.id;
+                    option.textContent = `${turma.nome} - ${turma.serie}`;
+                    select.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error('Erro ao carregar turmas:', error);
+                showError('Erro ao carregar turmas');
+            }
+        }
+
+        async function loadAlunos() {
+            const turmaId = document.getElementById('turmaSelect').value;
+            const data = document.getElementById('dataSelect').value;
+            
+            if (!turmaId || !data) {
+                document.getElementById('chamadaContainer').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+
+            try {
+                const turma = turmas.find(t => t.id == turmaId);
+                document.getElementById('turmaInfo').textContent = turma.nome;
+
+                const alunos = await api.getAlunosTurma(turmaId);
+                
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('chamadaContainer').style.display = 'block';
+
+                const container = document.getElementById('alunosList');
+                container.innerHTML = '';
+
+                if (!alunos || alunos.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; padding: 2rem;">Nenhum aluno matriculado</p>';
+                    return;
+                }
+
+                alunos.forEach(aluno => {
+                    const card = document.createElement('div');
+                    card.style.cssText = 'background: #f8fafc; padding: 1.5rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;';
+                    card.innerHTML = `
+                        <div>
+                            <div style="font-weight: 700; color: #1e293b; margin-bottom: 0.25rem;">
+                                ${aluno.usuario.first_name} ${aluno.usuario.last_name}
+                            </div>
+                            <div style="color: #64748b; font-size: 0.9rem;">
+                                Matrícula: ${aluno.matricula}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="freq_${aluno.id}" value="presente" checked>
+                                <span style="color: #10b981; font-weight: 600;">✓ Presente</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="freq_${aluno.id}" value="falta">
+                                <span style="color: #ef4444; font-weight: 600;">✗ Falta</span>
+                            </label>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Erro ao carregar alunos:', error);
+                showError('Erro ao carregar alunos');
+            }
+        }
+
+        function marcarTodosPresentes() {
+            document.querySelectorAll('input[value="presente"]').forEach(input => {
+                input.checked = true;
+            });
+            showSuccess('Todos marcados como presentes');
+        }
+
+        function marcarTodosFaltosos() {
+            document.querySelectorAll('input[value="falta"]').forEach(input => {
+                input.checked = true;
+            });
+            showSuccess('Todos marcados como faltosos');
+        }
+
+        async function salvarFrequencias() {
+            const turmaId = document.getElementById('turmaSelect').value;
+            const data = document.getElementById('dataSelect').value;
+
+            if (!turmaId || !data) {
+                showError('Selecione turma e data');
+                return;
+            }
+
+            let frequenciasSalvas = 0;
+            const radios = document.querySelectorAll('input[type="radio"]:checked');
+
+            radios.forEach(radio => {
+                const presente = radio.value === 'presente';
+                frequenciasSalvas++;
+                // Aqui você faria a chamada à API
+                // await api.createFrequencia({...})
+            });
+
+            if (frequenciasSalvas > 0) {
+                showSuccess(`${frequenciasSalvas} frequência(s) salva(s) com sucesso!`);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Alunos - Admin</title>
+    <link rel="stylesheet" href="css/admin-style.css">
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo-section">
+            <div class="logo-icon">🎓</div>
+            <h1 class="logo-text">EduGestão</h1>
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-name" id="userName">Administrador</div>
+                <div class="user-role">Gestão de Alunos</div>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="btn-back">← Voltar</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>👨‍🎓 Gestão de Alunos</h1>
+            <p>Gerenciar todos os alunos matriculados</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalAlunos">0</div>
+                <div class="stat-label">Total de Alunos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="alunosAtivos">0</div>
+                <div class="stat-label">Alunos Ativos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="novasMatriculas">0</div>
+                <div class="stat-label">Novas Matrículas (mês)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalTurmas">0</div>
+                <div class="stat-label">Turmas</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3>Filtros</h3>
+                <button onclick="novoAluno()" class="btn-primary">+ Novo Aluno</button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <select id="turmaFiltro" class="form-select" onchange="filtrarAlunos()">
+                    <option value="">Todas as turmas</option>
+                </select>
+                <select id="statusFiltro" class="form-select" onchange="filtrarAlunos()">
+                    <option value="">Todos os status</option>
+                    <option value="true">Ativos</option>
+                    <option value="false">Inativos</option>
+                </select>
+                <input type="text" id="buscaFiltro" class="form-input" placeholder="Buscar aluno..." onkeyup="filtrarAlunos()">
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Matrícula</th>
+                        <th>Nome</th>
+                        <th>Turma</th>
+                        <th>Responsável</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="alunosTable">
+                    <tr><td colspan="6" class="loading">Carregando alunos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/admin-auth.js"></script>
+    <script>
+        let currentUser = null;
+        let alunos = [];
+
+        async function init() {
+            currentUser = await checkAdminAuth();
+            if (!currentUser) return;
+            document.getElementById('userName').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
+            await loadAlunos();
+        }
+
+        async function loadAlunos() {
+            try {
+                const response = await api.getAlunos();
+                alunos = response.results || response || [];
+                
+                document.getElementById('totalAlunos').textContent = alunos.length;
+                document.getElementById('alunosAtivos').textContent = alunos.filter(a => a.ativo).length;
+                
+                renderAlunos(alunos);
+            } catch (error) {
+                console.error('Erro ao carregar alunos:', error);
+                showError('Erro ao carregar alunos');
+            }
+        }
+
+        function renderAlunos(alunosList) {
+            const tbody = document.getElementById('alunosTable');
+            if (alunosList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">Nenhum aluno encontrado</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = alunosList.map(aluno => `
+                <tr>
+                    <td>${aluno.matricula || '-'}</td>
+                    <td>${aluno.nome || aluno.first_name + ' ' + aluno.last_name}</td>
+                    <td>${aluno.turma_nome || '-'}</td>
+                    <td>${aluno.responsavel_nome || '-'}</td>
+                    <td><span style="color: ${aluno.ativo ? '#10b981' : '#ef4444'}; font-weight: 600;">
+                        ${aluno.ativo ? '✓ Ativo' : '✗ Inativo'}
+                    </span></td>
+                    <td>
+                        <button onclick="verAluno(${aluno.id})" class="btn-secondary" style="padding: 0.5rem; margin-right: 0.5rem;">👁️</button>
+                        <button onclick="editarAluno(${aluno.id})" class="btn-secondary" style="padding: 0.5rem;">✏️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filtrarAlunos() {
+            const busca = document.getElementById('buscaFiltro').value.toLowerCase();
+            const status = document.getElementById('statusFiltro').value;
+            
+            let filtrados = alunos;
+            
+            if (status) {
+                filtrados = filtrados.filter(a => a.ativo.toString() === status);
+            }
+            
+            if (busca) {
+                filtrados = filtrados.filter(a => 
+                    (a.nome || '').toLowerCase().includes(busca) ||
+                    (a.first_name + ' ' + a.last_name).toLowerCase().includes(busca)
+                );
+            }
+            
+            renderAlunos(filtrados);
+        }
+
+        function novoAluno() {
+            window.location.href = 'cadastro.html?tipo=aluno';
+        }
+
+        function verAluno(id) {
+            alert(`Ver detalhes do aluno ${id}`);
+        }
+
+        function editarAluno(id) {
+            alert(`Editar aluno ${id}`);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

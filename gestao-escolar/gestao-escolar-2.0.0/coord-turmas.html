@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turmas - Coordenador</title>
+    <link rel="stylesheet" href="css/coord-style.css">
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo-section">
+            <div class="logo-icon">🎓</div>
+            <h1 class="logo-text">EduGestão</h1>
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-name" id="userName">Coordenador</div>
+                <div class="user-role">Minhas Turmas</div>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="btn-back">← Voltar</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>🏫 Minhas Turmas</h1>
+            <p>Gerenciar turmas sob sua coordenação</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalTurmas">0</div>
+                <div class="stat-label">Turmas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalAlunos">0</div>
+                <div class="stat-label">Alunos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalProfessores">0</div>
+                <div class="stat-label">Professores</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="mediaTurma">0</div>
+                <div class="stat-label">Média/Turma</div>
+            </div>
+        </div>
+
+        <div class="card-grid" id="turmasGrid">
+            <div class="loading">Carregando turmas...</div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/coord-auth.js"></script>
+    <script>
+        let currentUser = null;
+
+        async function init() {
+            currentUser = await checkCoordAuth();
+            if (!currentUser) return;
+            document.getElementById('userName').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
+            await loadTurmas();
+        }
+
+        async function loadTurmas() {
+            try {
+                const response = await api.getTurmas();
+                const turmas = response.results || response || [];
+                
+                const totalAlunos = turmas.reduce((sum, t) => sum + (t.total_alunos || 0), 0);
+                
+                document.getElementById('totalTurmas').textContent = turmas.length;
+                document.getElementById('totalAlunos').textContent = totalAlunos;
+                document.getElementById('mediaTurma').textContent = turmas.length > 0 ? Math.round(totalAlunos / turmas.length) : 0;
+                
+                renderTurmas(turmas);
+            } catch (error) {
+                console.error('Erro ao carregar turmas:', error);
+                showError('Erro ao carregar turmas');
+            }
+        }
+
+        function renderTurmas(turmas) {
+            const grid = document.getElementById('turmasGrid');
+            
+            if (turmas.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #64748b;">Nenhuma turma encontrada</div>';
+                return;
+            }
+
+            grid.innerHTML = turmas.map(turma => `
+                <div class="card" style="cursor: pointer;" onclick="verTurma(${turma.id})">
+                    <h3 style="color: #059669; margin-bottom: 1rem;">${turma.nome}</h3>
+                    <div style="color: #64748b; margin-bottom: 0.5rem;">
+                        <strong>Série:</strong> ${turma.serie || '-'}
+                    </div>
+                    <div style="color: #64748b; margin-bottom: 0.5rem;">
+                        <strong>Turno:</strong> ${turma.turno || '-'}
+                    </div>
+                    <div style="color: #64748b; margin-bottom: 1rem;">
+                        <strong>Alunos:</strong> ${turma.total_alunos || 0}
+                    </div>
+                    <button onclick="event.stopPropagation(); verAlunos(${turma.id})" class="btn-primary" style="width: 100%;">👥 Ver Alunos</button>
+                </div>
+            `).join('');
+        }
+
+        function verTurma(id) {
+            alert(`Ver detalhes da turma ${id}`);
+        }
+
+        function verAlunos(id) {
+            alert(`Ver alunos da turma ${id}`);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

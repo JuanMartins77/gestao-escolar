@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Turmas - Admin</title>
+    <link rel="stylesheet" href="css/admin-style.css">
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo-section">
+            <div class="logo-icon">🎓</div>
+            <h1 class="logo-text">EduGestão</h1>
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-name" id="userName">Administrador</div>
+                <div class="user-role">Gestão de Turmas</div>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="btn-back">← Voltar</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>🏫 Gestão de Turmas</h1>
+            <p>Gerenciar turmas e disciplinas</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalTurmas">0</div>
+                <div class="stat-label">Total de Turmas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalAlunos">0</div>
+                <div class="stat-label">Total de Alunos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="mediaTurma">0</div>
+                <div class="stat-label">Média por Turma</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalDisciplinas">0</div>
+                <div class="stat-label">Disciplinas</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3>Turmas Ativas</h3>
+                <button onclick="novaTurma()" class="btn-primary">+ Nova Turma</button>
+            </div>
+        </div>
+
+        <div class="card-grid" id="turmasGrid">
+            <div class="loading">Carregando turmas...</div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/admin-auth.js"></script>
+    <script>
+        let currentUser = null;
+        let turmas = [];
+
+        async function init() {
+            currentUser = await checkAdminAuth();
+            if (!currentUser) return;
+            document.getElementById('userName').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
+            await loadTurmas();
+        }
+
+        async function loadTurmas() {
+            try {
+                const response = await api.getTurmas();
+                turmas = response.results || response || [];
+                
+                const totalAlunos = turmas.reduce((sum, t) => sum + (t.total_alunos || 0), 0);
+                
+                document.getElementById('totalTurmas').textContent = turmas.length;
+                document.getElementById('totalAlunos').textContent = totalAlunos;
+                document.getElementById('mediaTurma').textContent = turmas.length > 0 ? Math.round(totalAlunos / turmas.length) : 0;
+                
+                renderTurmas(turmas);
+            } catch (error) {
+                console.error('Erro ao carregar turmas:', error);
+                showError('Erro ao carregar turmas');
+            }
+        }
+
+        function renderTurmas(turmasList) {
+            const grid = document.getElementById('turmasGrid');
+            
+            if (turmasList.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #64748b;">Nenhuma turma cadastrada</div>';
+                return;
+            }
+
+            grid.innerHTML = turmasList.map(turma => `
+                <div class="card" style="cursor: pointer;" onclick="verTurma(${turma.id})">
+                    <h3 style="color: #dc2626; margin-bottom: 1rem;">${turma.nome}</h3>
+                    <div style="color: #64748b; margin-bottom: 0.5rem;">
+                        <strong>Série:</strong> ${turma.serie || '-'}
+                    </div>
+                    <div style="color: #64748b; margin-bottom: 0.5rem;">
+                        <strong>Turno:</strong> ${turma.turno || '-'}
+                    </div>
+                    <div style="color: #64748b; margin-bottom: 1rem;">
+                        <strong>Alunos:</strong> ${turma.total_alunos || 0}
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button onclick="event.stopPropagation(); editarTurma(${turma.id})" class="btn-secondary" style="flex: 1;">✏️ Editar</button>
+                        <button onclick="event.stopPropagation(); verAlunos(${turma.id})" class="btn-primary" style="flex: 1;">👥 Alunos</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function novaTurma() {
+            alert('Criar nova turma - Em desenvolvimento');
+        }
+
+        function verTurma(id) {
+            alert(`Ver detalhes da turma ${id}`);
+        }
+
+        function editarTurma(id) {
+            alert(`Editar turma ${id}`);
+        }
+
+        function verAlunos(id) {
+            window.location.href = `admin-alunos.html?turma=${id}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

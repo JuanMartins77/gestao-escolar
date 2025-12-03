@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alunos da Turma - Professor</title>
+    <link rel="stylesheet" href="css/professor-style.css">
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo-section">
+            <div class="logo-icon">🎓</div>
+            <h1 class="logo-text">EduGestão</h1>
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-name" id="userName">Professor</div>
+                <div class="user-role">Alunos da Turma</div>
+            </div>
+            <button onclick="window.location.href='professor-turmas.html'" class="btn-back">← Voltar</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>👥 Alunos da Turma</h1>
+            <p id="turmaInfo">Carregando informações...</p>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Carregando alunos...</p>
+        </div>
+
+        <div id="content" style="display: none;">
+            <!-- Estatísticas -->
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem;">
+                <div class="stat-card-small">
+                    <div class="stat-label">Total de Alunos</div>
+                    <div class="stat-value" id="totalAlunos">0</div>
+                </div>
+                <div class="stat-card-small">
+                    <div class="stat-label">Média da Turma</div>
+                    <div class="stat-value" id="mediaTurma">-</div>
+                </div>
+                <div class="stat-card-small">
+                    <div class="stat-label">Frequência Média</div>
+                    <div class="stat-value" id="frequenciaMedia">-</div>
+                </div>
+            </div>
+
+            <!-- Tabela de Alunos -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Matrícula</th>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Média</th>
+                            <th>Frequência</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alunosTable">
+                        <!-- Alunos serão inseridos aqui -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/professor-auth.js"></script>
+    <script>
+        let currentUser = null;
+        let turmaId = null;
+
+        async function init() {
+            currentUser = await checkProfessorAuth();
+            if (!currentUser) return;
+
+            // Pegar ID da turma da URL
+            const params = new URLSearchParams(window.location.search);
+            turmaId = params.get('turma');
+
+            if (!turmaId) {
+                alert('Turma não especificada');
+                window.location.href = 'professor-turmas.html';
+                return;
+            }
+
+            document.getElementById('userName').textContent = 
+                `${currentUser.first_name} ${currentUser.last_name}`;
+
+            await loadTurmaInfo();
+            await loadAlunos();
+        }
+
+        async function loadTurmaInfo() {
+            try {
+                const turma = await api.getTurma(turmaId);
+                document.getElementById('turmaInfo').textContent = 
+                    `${turma.nome} - ${turma.serie} - ${getTurnoLabel(turma.turno)}`;
+            } catch (error) {
+                console.error('Erro ao carregar turma:', error);
+            }
+        }
+
+        async function loadAlunos() {
+            try {
+                const alunos = await api.getAlunosTurma(turmaId);
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+                if (!alunos || alunos.length === 0) {
+                    document.getElementById('alunosTable').innerHTML = `
+                        <tr><td colspan="6" style="text-align: center; padding: 2rem;">
+                            Nenhum aluno matriculado nesta turma
+                        </td></tr>
+                    `;
+                    return;
+                }
+
+                document.getElementById('totalAlunos').textContent = alunos.length;
+
+                const tbody = document.getElementById('alunosTable');
+                tbody.innerHTML = '';
+
+                alunos.forEach(aluno => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${aluno.matricula}</td>
+                        <td>${aluno.usuario.first_name} ${aluno.usuario.last_name}</td>
+                        <td>${aluno.usuario.email}</td>
+                        <td><span style="color: ${getNotaColor(7.5)}; font-weight: 700;">7.5</span></td>
+                        <td><span style="color: ${getFrequenciaColor(85)}; font-weight: 700;">85%</span></td>
+                        <td>
+                            <button onclick="verDetalhes(${aluno.id})" class="btn-small">Ver Detalhes</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Erro ao carregar alunos:', error);
+                document.getElementById('loading').innerHTML = `
+                    <p style="color: #ef4444;">Erro ao carregar alunos</p>
+                    <button onclick="location.reload()" class="btn-primary">Tentar Novamente</button>
+                `;
+            }
+        }
+
+        function getTurnoLabel(turno) {
+            const turnos = {
+                'matutino': 'Matutino',
+                'vespertino': 'Vespertino',
+                'noturno': 'Noturno'
+            };
+            return turnos[turno] || turno;
+        }
+
+        function verDetalhes(alunoId) {
+            alert(`Funcionalidade: Ver detalhes do aluno ${alunoId}\nEm desenvolvimento`);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+    <style>
+        .stat-card-small {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .stat-value {
+            color: #1e293b;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .btn-small {
+            padding: 0.5rem 1rem;
+            background: #14b8a6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .btn-small:hover {
+            background: #0d9488;
+        }
+    </style>
+</body>
+</html>

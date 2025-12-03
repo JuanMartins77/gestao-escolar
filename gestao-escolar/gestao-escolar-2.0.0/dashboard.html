@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduGestão - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+        }
+
+        .logo-text {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-info {
+            color: white;
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .user-role {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .btn-logout {
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: white;
+            color: #14b8a6;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Card */
+        .hero-card {
+            background: white;
+            border-radius: 24px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #14b8a6, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .hero-info h1 {
+            font-size: 2rem;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-subtitle {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #f0fdfa;
+            color: #14b8a6;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-icon {
+            font-size: 3rem;
+        }
+
+        .stat-info h3 {
+            font-size: 2rem;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-info p {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        /* Menu Grid */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .menu-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border-color: #14b8a6;
+        }
+
+        .menu-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .menu-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .menu-desc {
+            color: #64748b;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #64748b;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #14b8a6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Section Title */
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title svg {
+            width: 28px;
+            height: 28px;
+            stroke: #14b8a6;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .hero-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .top-nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <div class="top-nav">
+        <div class="logo-section">
+            <div class="logo-icon">🎓</div>
+            <h1 class="logo-text">EduGestão</h1>
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-name" id="userName">Carregando...</div>
+                <div class="user-role" id="userRole"></div>
+            </div>
+            <button onclick="logout()" class="btn-logout">Sair</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Carregando dashboard...</p>
+        </div>
+
+        <!-- Main Content (hidden initially) -->
+        <div id="mainContent" style="display: none;">
+            <!-- Hero Card -->
+            <div class="hero-card">
+                <div class="avatar" id="userAvatar">A</div>
+                <div class="hero-info">
+                    <h1 id="welcomeTitle">Bem-vindo ao Dashboard</h1>
+                    <p class="hero-subtitle" id="welcomeSubtitle">Sistema de Gestão Escolar</p>
+                    <span class="badge" id="userBadge">✓ Sistema Ativo</span>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid" id="statsGrid">
+                <!-- Stats serão inseridas dinamicamente -->
+            </div>
+
+            <!-- Menu Section -->
+            <h2 class="section-title" id="menuSectionTitle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+                Suas Funcionalidades
+            </h2>
+            <div class="menu-grid" id="menuGrid">
+                <!-- Menu items serão inseridos dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/dashboard-permissions.js"></script>
+    <script>
+        let currentUser = null;
+
+        // Verificar autenticação ao carregar
+        async function checkAuth() {
+            try {
+                const userStr = localStorage.getItem('user');
+                if (!userStr) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                currentUser = JSON.parse(userStr);
+                
+                try {
+                    await api.getCurrentUser();
+                } catch (error) {
+                    console.error('Sessão inválida:', error);
+                    localStorage.removeItem('user');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                await loadDashboard();
+                
+            } catch (error) {
+                console.error('Erro ao verificar autenticação:', error);
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Carregar dashboard baseado no tipo de usuário
+        async function loadDashboard() {
+            try {
+                const fullName = `${currentUser.first_name} ${currentUser.last_name}`;
+                document.getElementById('userName').textContent = fullName;
+                document.getElementById('userRole').textContent = getTipoUsuarioLabel(currentUser.tipo_usuario);
+                document.getElementById('userAvatar').textContent = currentUser.first_name.charAt(0).toUpperCase();
+                document.getElementById('welcomeTitle').textContent = `Bem-vindo, ${currentUser.first_name}!`;
+                document.getElementById('welcomeSubtitle').textContent = `Dashboard ${getTipoUsuarioLabel(currentUser.tipo_usuario)}`;
+                document.getElementById('userBadge').textContent = `✓ ${getTipoUsuarioLabel(currentUser.tipo_usuario)}`;
+
+                // Carregar conteúdo baseado no tipo de usuário
+                await loadDashboardByRole(currentUser.tipo_usuario);
+
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+                document.getElementById('loadingState').innerHTML = `
+                    <p style="color: #ef4444;">Erro ao carregar dados do dashboard</p>
+                    <button onclick="location.reload()" style="padding: 1rem 2rem; background: #14b8a6; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; margin-top: 1rem;">
+                        Tentar Novamente
+                    </button>
+                `;
+            }
+        }
+
+        // Carregar dashboard baseado no cargo
+        async function loadDashboardByRole(role) {
+            const config = getDashboardConfig(role);
+            
+            // Carregar estatísticas
+            await loadStats(config.stats);
+            
+            // Carregar menu
+            loadMenu(config.menu);
+        }
+
+        // Carregar estatísticas
+        async function loadStats(statsConfig) {
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = '';
+
+            for (const stat of statsConfig) {
+                try {
+                    let value = '-';
+                    
+                    if (stat.apiCall) {
+                        const data = await stat.apiCall();
+                        value = data.count || data.results?.length || data.length || 0;
+                    }
+
+                    const statCard = document.createElement('div');
+                    statCard.className = 'stat-card';
+                    statCard.innerHTML = `
+                        <div class="stat-icon">${stat.icon}</div>
+                        <div class="stat-info">
+                            <h3>${value}</h3>
+                            <p>${stat.label}</p>
+                        </div>
+                    `;
+                    
+                    if (stat.onClick) {
+                        statCard.onclick = stat.onClick;
+                    }
+                    
+                    statsGrid.appendChild(statCard);
+                } catch (error) {
+                    console.error(`Erro ao carregar stat ${stat.label}:`, error);
+                }
+            }
+        }
+
+        // Carregar menu
+        function loadMenu(menuConfig) {
+            const menuGrid = document.getElementById('menuGrid');
+            menuGrid.innerHTML = '';
+
+            menuConfig.forEach(item => {
+                const menuCard = document.createElement('div');
+                menuCard.className = 'menu-card';
+                menuCard.innerHTML = `
+                    <div class="menu-icon">${item.icon}</div>
+                    <div class="menu-title">${item.title}</div>
+                    <div class="menu-desc">${item.description}</div>
+                `;
+                menuCard.onclick = item.onClick;
+                menuGrid.appendChild(menuCard);
+            });
+        }
+
+        // Obter label do tipo de usuário
+        function getTipoUsuarioLabel(tipo) {
+            const labels = {
+                'admin': 'Administrador',
+                'secretaria': 'Secretária',
+                'coordenador': 'Coordenador',
+                'professor': 'Professor',
+                'aluno': 'Aluno',
+                'responsavel': 'Responsável'
+            };
+            return labels[tipo] || tipo;
+        }
+
+        // Função de logout
+        async function logout() {
+            if (confirm('Deseja realmente sair?')) {
+                try {
+                    await api.logout();
+                } catch (error) {
+                    console.error('Erro ao fazer logout:', error);
+                }
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', checkAuth);
+    </script>
+</body>
+</html>

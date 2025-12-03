@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios - Admin</title>
+    <link rel="stylesheet" href="css/admin-style.css">
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo-section">
+            <div class="logo-icon">🎓</div>
+            <h1 class="logo-text">EduGestão</h1>
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-name" id="userName">Administrador</div>
+                <div class="user-role">Relatórios</div>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="btn-back">← Voltar</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>📊 Relatórios Gerenciais</h1>
+            <p>Análises e estatísticas do sistema</p>
+        </div>
+
+        <div class="card-grid">
+            <div class="card" onclick="gerarRelatorio('alunos')">
+                <h3>👨‍🎓 Relatório de Alunos</h3>
+                <p style="color: #64748b; margin: 1rem 0;">Lista completa de alunos matriculados com dados pessoais e acadêmicos</p>
+                <button class="btn-primary" style="width: 100%;">Gerar Relatório</button>
+            </div>
+
+            <div class="card" onclick="gerarRelatorio('professores')">
+                <h3>👨‍🏫 Relatório de Professores</h3>
+                <p style="color: #64748b; margin: 1rem 0;">Dados dos professores, disciplinas e carga horária</p>
+                <button class="btn-primary" style="width: 100%;">Gerar Relatório</button>
+            </div>
+
+            <div class="card" onclick="gerarRelatorio('turmas')">
+                <h3>🏫 Relatório de Turmas</h3>
+                <p style="color: #64748b; margin: 1rem 0;">Informações sobre turmas, alunos e disciplinas</p>
+                <button class="btn-primary" style="width: 100%;">Gerar Relatório</button>
+            </div>
+
+            <div class="card" onclick="gerarRelatorio('notas')">
+                <h3>📝 Relatório de Notas</h3>
+                <p style="color: #64748b; margin: 1rem 0;">Desempenho acadêmico dos alunos por período</p>
+                <button class="btn-primary" style="width: 100%;">Gerar Relatório</button>
+            </div>
+
+            <div class="card" onclick="gerarRelatorio('frequencia')">
+                <h3>📅 Relatório de Frequência</h3>
+                <p style="color: #64748b; margin: 1rem 0;">Análise de presença e faltas dos alunos</p>
+                <button class="btn-primary" style="width: 100%;">Gerar Relatório</button>
+            </div>
+
+            <div class="card" onclick="gerarRelatorio('financeiro')">
+                <h3>💰 Relatório Financeiro</h3>
+                <p style="color: #64748b; margin: 1rem 0;">Dados financeiros e mensalidades</p>
+                <button class="btn-primary" style="width: 100%;">Gerar Relatório</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📈 Estatísticas Rápidas</h3>
+            <div class="stats-grid" style="margin-top: 1.5rem;">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalUsuarios">0</div>
+                    <div class="stat-label">Usuários</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalAlunos">0</div>
+                    <div class="stat-label">Alunos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalProfessores">0</div>
+                    <div class="stat-label">Professores</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalTurmas">0</div>
+                    <div class="stat-label">Turmas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/admin-auth.js"></script>
+    <script>
+        let currentUser = null;
+
+        async function init() {
+            currentUser = await checkAdminAuth();
+            if (!currentUser) return;
+            document.getElementById('userName').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
+            await loadEstatisticas();
+        }
+
+        async function loadEstatisticas() {
+            try {
+                const [usuarios, alunos, turmas] = await Promise.all([
+                    api.getUsuarios(),
+                    api.getAlunos(),
+                    api.getTurmas()
+                ]);
+
+                const usuariosList = usuarios.results || usuarios || [];
+                const alunosList = alunos.results || alunos || [];
+                const turmasList = turmas.results || turmas || [];
+
+                document.getElementById('totalUsuarios').textContent = usuariosList.length;
+                document.getElementById('totalAlunos').textContent = alunosList.length;
+                document.getElementById('totalProfessores').textContent = 
+                    usuariosList.filter(u => u.tipo_usuario === 'professor').length;
+                document.getElementById('totalTurmas').textContent = turmasList.length;
+
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+            }
+        }
+
+        function gerarRelatorio(tipo) {
+            showSuccess(`Gerando relatório de ${tipo}...`);
+            setTimeout(() => {
+                alert(`Relatório de ${tipo} gerado!\n\nEsta funcionalidade será implementada em breve.`);
+            }, 1000);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

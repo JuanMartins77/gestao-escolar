@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduGestão - Cadastro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .cadastro-card {
+            background: white;
+            border-radius: 24px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cadastro-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .cadastro-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #14b8a6;
+            margin-bottom: 0.5rem;
+        }
+
+        .cadastro-header p {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #e5e7eb;
+            z-index: 0;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #14b8a6, #06b6d4);
+            z-index: 1;
+            transition: width 0.3s ease;
+        }
+
+        .progress-bar[data-step="1"]::after { width: 0%; }
+        .progress-bar[data-step="2"]::after { width: 50%; }
+        .progress-bar[data-step="3"]::after { width: 100%; }
+
+        .progress-step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #94a3b8;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s;
+        }
+
+        .progress-step.active {
+            background: linear-gradient(135deg, #14b8a6, #06b6d4);
+            border-color: #14b8a6;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .progress-step.completed {
+            background: #14b8a6;
+            border-color: #14b8a6;
+            color: white;
+        }
+
+        .form-step {
+            display: none;
+        }
+
+        .form-step.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-label.required::after {
+            content: ' *';
+            color: #ef4444;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #14b8a6;
+            box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
+        }
+
+        .form-input:disabled, .form-select:disabled {
+            background: #f3f4f6;
+            cursor: not-allowed;
+        }
+
+        .tipo-usuario {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tipo-card {
+            padding: 1.5rem;
+            border: 3px solid #e5e7eb;
+            border-radius: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tipo-card:hover {
+            border-color: #14b8a6;
+            transform: translateY(-3px);
+        }
+
+        .tipo-card.selected {
+            border-color: #14b8a6;
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.1), rgba(6, 182, 212, 0.1));
+        }
+
+        .tipo-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tipo-card .title {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1.1rem;
+        }
+
+        .error-message {
+            padding: 1rem;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            color: #dc2626;
+            font-size: 0.95rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .error-message.show {
+            display: flex;
+        }
+
+        .success-message {
+            padding: 1rem;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            color: #16a34a;
+            font-size: 0.95rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .success-message.show {
+            display: flex;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 1.1rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(20, 184, 166, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #64748b;
+            border: 2px solid #e5e7eb;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #f8fafc;
+            border-color: #14b8a6;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .link-login {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #64748b;
+        }
+
+        .link-login a {
+            color: #14b8a6;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .link-login a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 640px) {
+            .cadastro-card {
+                padding: 2rem;
+            }
+
+            .cadastro-header h1 {
+                font-size: 2rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cadastro-card">
+        <div class="cadastro-header">
+            <h1>🎓 Criar Conta</h1>
+            <p>Cadastre-se no EduGestão</p>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar" id="progressBar" data-step="1">
+            <div class="progress-step active" id="step1">1</div>
+            <div class="progress-step" id="step2">2</div>
+            <div class="progress-step" id="step3">3</div>
+        </div>
+
+        <form id="cadastroForm">
+            <!-- Step 1: Tipo de Usuário -->
+            <div class="form-step active" id="formStep1">
+                <h3 style="margin-bottom: 1.5rem; color: #1e293b; font-size: 1.3rem;">Selecione o tipo de conta</h3>
+                
+                <div class="tipo-usuario" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
+                    <div class="tipo-card" data-tipo="professor">
+                        <div class="icon">👨‍🏫</div>
+                        <div class="title">Professor</div>
+                    </div>
+                    <div class="tipo-card" data-tipo="coordenador">
+                        <div class="icon">📋</div>
+                        <div class="title">Coordenador</div>
+                    </div>
+                    <div class="tipo-card" data-tipo="secretario">
+                        <div class="icon">📝</div>
+                        <div class="title">Secretário</div>
+                    </div>
+                    <div class="tipo-card" data-tipo="admin">
+                        <div class="icon">👔</div>
+                        <div class="title">Admin</div>
+                    </div>
+                </div>
+
+                <input type="hidden" id="tipoUsuario" required>
+            </div>
+
+            <!-- Step 2: Dados Pessoais -->
+            <div class="form-step" id="formStep2">
+                <h3 style="margin-bottom: 1.5rem; color: #1e293b; font-size: 1.3rem;">Dados Pessoais</h3>
+                
+                <div class="form-group">
+                    <label class="form-label required">Nome Completo</label>
+                    <input type="text" class="form-input" id="nomeCompleto" placeholder="Digite seu nome completo" required>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label required">CPF</label>
+                        <input type="text" class="form-input" id="cpf" placeholder="000.000.000-00" maxlength="14" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required">Data de Nascimento</label>
+                        <input type="date" class="form-input" id="dataNascimento" required>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label required">Telefone</label>
+                        <input type="tel" class="form-input" id="telefone" placeholder="(00) 00000-0000" maxlength="15" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Telefone Alternativo</label>
+                        <input type="tel" class="form-input" id="telefoneAlt" placeholder="(00) 00000-0000" maxlength="15">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Dados de Acesso -->
+            <div class="form-step" id="formStep3">
+                <h3 style="margin-bottom: 1.5rem; color: #1e293b; font-size: 1.3rem;">Dados de Acesso</h3>
+                
+                <div class="form-group">
+                    <label class="form-label required">Nome de Usuário</label>
+                    <input type="text" class="form-input" id="username" placeholder="usuario.nome (sem espaços)" pattern="[a-zA-Z0-9._-]+" required>
+                    <small style="color: #64748b; font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                        Use este nome para fazer login. Apenas letras, números, ponto e hífen.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">Email</label>
+                    <input type="email" class="form-input" id="email" placeholder="seu@email.com" required>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label required">Senha</label>
+                        <input type="password" class="form-input" id="senha" placeholder="Mínimo 6 caracteres" minlength="6" required>
+                        
+                        <!-- Barra de força da senha -->
+                        <div style="margin-top: 0.75rem;">
+                            <div style="display: flex; gap: 0.25rem; height: 4px; margin-bottom: 0.5rem;">
+                                <div id="strength-bar-1" style="flex: 1; background: #e5e7eb; border-radius: 2px; transition: all 0.3s;"></div>
+                                <div id="strength-bar-2" style="flex: 1; background: #e5e7eb; border-radius: 2px; transition: all 0.3s;"></div>
+                                <div id="strength-bar-3" style="flex: 1; background: #e5e7eb; border-radius: 2px; transition: all 0.3s;"></div>
+                                <div id="strength-bar-4" style="flex: 1; background: #e5e7eb; border-radius: 2px; transition: all 0.3s;"></div>
+                            </div>
+                            <div id="strength-text" style="font-size: 0.85rem; color: #64748b; font-weight: 600;"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required">Confirmar Senha</label>
+                        <input type="password" class="form-input" id="confirmarSenha" placeholder="Digite a senha novamente" minlength="6" required>
+                    </div>
+                </div>
+
+                <div style="padding: 1rem; background: #f0fdfa; border-radius: 12px; margin-top: 1rem;">
+                    <p style="font-size: 0.9rem; color: #14b8a6; font-weight: 600; margin-bottom: 0.5rem;">✓ Requisitos:</p>
+                    <ul style="font-size: 0.85rem; color: #64748b; margin-left: 1.5rem; line-height: 1.6;">
+                        <li>Nome de usuário único (será usado no login)</li>
+                        <li>Senha com no mínimo 6 caracteres</li>
+                        <li>Email válido</li>
+                    </ul>
+                    
+                    <p style="font-size: 0.9rem; color: #14b8a6; font-weight: 600; margin: 0.75rem 0 0.5rem 0;">💡 Dicas para senha forte:</p>
+                    <ul style="font-size: 0.85rem; color: #64748b; margin-left: 1.5rem; line-height: 1.6;">
+                        <li>Use letras maiúsculas e minúsculas</li>
+                        <li>Adicione números</li>
+                        <li>Inclua caracteres especiais (!@#$%)</li>
+                        <li>Mínimo 8 caracteres (recomendado)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span id="errorText"></span>
+            </div>
+
+            <div class="success-message" id="successMessage">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <span>Cadastro realizado com sucesso! Redirecionando...</span>
+            </div>
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary" id="btnVoltar" style="display: none;">
+                    ← Voltar
+                </button>
+                <button type="button" class="btn btn-primary" id="btnProximo">
+                    Próximo →
+                </button>
+            </div>
+        </form>
+
+        <div class="link-login">
+            Já tem uma conta? <a href="index.html">Fazer login</a>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3;
+
+        // Elementos
+        const progressBar = document.getElementById('progressBar');
+        const btnVoltar = document.getElementById('btnVoltar');
+        const btnProximo = document.getElementById('btnProximo');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const successMessage = document.getElementById('successMessage');
+
+        // Seleção de tipo de usuário
+        document.querySelectorAll('.tipo-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                document.getElementById('tipoUsuario').value = card.dataset.tipo;
+            });
+        });
+
+        // Máscaras
+        document.getElementById('cpf').addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            e.target.value = value;
+        });
+
+        document.getElementById('telefone').addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
+            value = value.replace(/(\d)(\d{4})$/, '$1-$2');
+            e.target.value = value;
+        });
+
+        document.getElementById('telefoneAlt').addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
+            value = value.replace(/(\d)(\d{4})$/, '$1-$2');
+            e.target.value = value;
+        });
+
+        // Verificar força da senha
+        document.getElementById('senha').addEventListener('input', (e) => {
+            const senha = e.target.value;
+            const strength = calculatePasswordStrength(senha);
+            updateStrengthBar(strength);
+        });
+
+        function calculatePasswordStrength(password) {
+            if (!password) return 0;
+            
+            let strength = 0;
+            
+            // Comprimento
+            if (password.length >= 6) strength++;
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            
+            // Tem números
+            if (/\d/.test(password)) strength++;
+            
+            // Tem letras minúsculas
+            if (/[a-z]/.test(password)) strength++;
+            
+            // Tem letras maiúsculas
+            if (/[A-Z]/.test(password)) strength++;
+            
+            // Tem caracteres especiais
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+            
+            // Normalizar para 0-4
+            if (strength <= 2) return 1; // Fraca
+            if (strength <= 4) return 2; // Média
+            if (strength <= 5) return 3; // Boa
+            return 4; // Forte
+        }
+
+        function updateStrengthBar(strength) {
+            const bars = [
+                document.getElementById('strength-bar-1'),
+                document.getElementById('strength-bar-2'),
+                document.getElementById('strength-bar-3'),
+                document.getElementById('strength-bar-4')
+            ];
+            const text = document.getElementById('strength-text');
+            
+            // Resetar todas as barras
+            bars.forEach(bar => bar.style.background = '#e5e7eb');
+            
+            const colors = {
+                1: { color: '#ef4444', text: '🔴 Senha Fraca' },
+                2: { color: '#f59e0b', text: '🟡 Senha Média' },
+                3: { color: '#3b82f6', text: '🔵 Senha Boa' },
+                4: { color: '#10b981', text: '🟢 Senha Forte' }
+            };
+            
+            if (strength > 0) {
+                const config = colors[strength];
+                text.textContent = config.text;
+                text.style.color = config.color;
+                
+                // Preencher barras
+                for (let i = 0; i < strength; i++) {
+                    bars[i].style.background = config.color;
+                }
+            } else {
+                text.textContent = '';
+            }
+        }
+
+        // Sugerir username baseado no nome completo
+        document.getElementById('nomeCompleto').addEventListener('blur', () => {
+            const usernameInput = document.getElementById('username');
+            if (!usernameInput.value) { // Só sugerir se estiver vazio
+                const nome = document.getElementById('nomeCompleto').value.trim();
+                if (nome) {
+                    // Pegar primeiro e último nome
+                    const partes = nome.toLowerCase().split(' ');
+                    const primeiroNome = partes[0];
+                    const ultimoNome = partes[partes.length - 1];
+                    
+                    // Criar sugestão: primeiro.ultimo
+                    let sugestao = primeiroNome;
+                    if (partes.length > 1 && ultimoNome !== primeiroNome) {
+                        sugestao += '.' + ultimoNome;
+                    }
+                    
+                    // Remover acentos e caracteres especiais
+                    sugestao = sugestao
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[^a-z0-9.]/g, '');
+                    
+                    usernameInput.value = sugestao;
+                    usernameInput.placeholder = sugestao;
+                }
+            }
+        });
+
+        // Navegação entre steps
+        btnProximo.addEventListener('click', () => {
+            if (validateCurrentStep()) {
+                if (currentStep < totalSteps) {
+                    nextStep();
+                } else {
+                    submitForm();
+                }
+            }
+        });
+
+        btnVoltar.addEventListener('click', () => {
+            previousStep();
+        });
+
+        function nextStep() {
+            document.getElementById(`formStep${currentStep}`).classList.remove('active');
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.getElementById(`step${currentStep}`).classList.add('completed');
+            
+            currentStep++;
+            
+            document.getElementById(`formStep${currentStep}`).classList.add('active');
+            document.getElementById(`step${currentStep}`).classList.add('active');
+            progressBar.dataset.step = currentStep;
+            
+            btnVoltar.style.display = 'block';
+            
+            if (currentStep === totalSteps) {
+                btnProximo.textContent = 'Finalizar Cadastro';
+            }
+            
+            errorMessage.classList.remove('show');
+        }
+
+        function previousStep() {
+            document.getElementById(`formStep${currentStep}`).classList.remove('active');
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            
+            currentStep--;
+            
+            document.getElementById(`formStep${currentStep}`).classList.add('active');
+            document.getElementById(`step${currentStep}`).classList.add('active');
+            document.getElementById(`step${currentStep}`).classList.remove('completed');
+            progressBar.dataset.step = currentStep;
+            
+            if (currentStep === 1) {
+                btnVoltar.style.display = 'none';
+            }
+            
+            btnProximo.textContent = 'Próximo →';
+            errorMessage.classList.remove('show');
+        }
+
+        function validateCurrentStep() {
+            errorMessage.classList.remove('show');
+            
+            if (currentStep === 1) {
+                const tipo = document.getElementById('tipoUsuario').value;
+                if (!tipo) {
+                    showError('Por favor, selecione um tipo de usuário');
+                    return false;
+                }
+            }
+            
+            if (currentStep === 2) {
+                const nome = document.getElementById('nomeCompleto').value.trim();
+                const cpf = document.getElementById('cpf').value.trim();
+                const dataNasc = document.getElementById('dataNascimento').value;
+                const telefone = document.getElementById('telefone').value.trim();
+                
+                if (!nome || !cpf || !dataNasc || !telefone) {
+                    showError('Por favor, preencha todos os campos obrigatórios');
+                    return false;
+                }
+                
+                if (cpf.replace(/\D/g, '').length !== 11) {
+                    showError('CPF inválido');
+                    return false;
+                }
+            }
+            
+            if (currentStep === 3) {
+                const username = document.getElementById('username').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const senha = document.getElementById('senha').value;
+                const confirmarSenha = document.getElementById('confirmarSenha').value;
+                
+                if (!username || !email || !senha || !confirmarSenha) {
+                    showError('Por favor, preencha todos os campos obrigatórios');
+                    return false;
+                }
+                
+                // Validar formato do username
+                const usernameRegex = /^[a-zA-Z0-9._-]+$/;
+                if (!usernameRegex.test(username)) {
+                    showError('Nome de usuário inválido. Use apenas letras, números, ponto, hífen ou underscore');
+                    return false;
+                }
+                
+                if (username.length < 3) {
+                    showError('Nome de usuário deve ter no mínimo 3 caracteres');
+                    return false;
+                }
+                
+                if (senha.length < 6) {
+                    showError('A senha deve ter no mínimo 6 caracteres');
+                    return false;
+                }
+                
+                if (senha !== confirmarSenha) {
+                    showError('As senhas não coincidem');
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.add('show');
+        }
+
+        async function submitForm() {
+            btnProximo.disabled = true;
+            btnProximo.textContent = 'Cadastrando...';
+            
+            try {
+                const nomeCompleto = document.getElementById('nomeCompleto').value.trim();
+                const nomeParts = nomeCompleto.split(' ');
+                const firstName = nomeParts[0];
+                const lastName = nomeParts.slice(1).join(' ') || nomeParts[0];
+                
+                const userData = {
+                    username: document.getElementById('username').value.trim(),
+                    email: document.getElementById('email').value.trim(),
+                    password: document.getElementById('senha').value,
+                    first_name: firstName,
+                    last_name: lastName,
+                    tipo_usuario: document.getElementById('tipoUsuario').value,
+                    cpf: document.getElementById('cpf').value.replace(/\D/g, ''),
+                    telefone: document.getElementById('telefone').value,
+                    data_nascimento: document.getElementById('dataNascimento').value
+                };
+                
+                // Cadastrar via API
+                await api.register(userData);
+                
+                // Mostrar sucesso com o username
+                const successMsg = document.querySelector('#successMessage span');
+                successMsg.textContent = `Cadastro realizado! Use "${userData.username}" para fazer login.`;
+                successMessage.classList.add('show');
+                errorMessage.classList.remove('show');
+                
+                // Redirecionar para dashboard
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 3000);
+                
+            } catch (error) {
+                showError(error.message || 'Erro ao cadastrar usuário');
+                btnProximo.disabled = false;
+                btnProximo.textContent = 'Finalizar Cadastro';
+            }
+        }
+    </script>
+</body>
+</html>

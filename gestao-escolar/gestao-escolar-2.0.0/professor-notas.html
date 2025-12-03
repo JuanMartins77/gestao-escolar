@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lançar Notas - Professor</title>
+    <link rel="stylesheet" href="css/professor-style.css">
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo-section">
+            <div class="logo-icon">🎓</div>
+            <h1 class="logo-text">EduGestão</h1>
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-name" id="userName">Professor</div>
+                <div class="user-role">Lançar Notas</div>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="btn-back">← Voltar</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>📝 Lançar Notas</h1>
+            <p>Selecione a turma e o bimestre para lançar as notas</p>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Carregando turmas...</p>
+        </div>
+
+        <div id="content" style="display: none;">
+            <!-- Filtros -->
+            <div style="background: white; padding: 2rem; border-radius: 16px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">Turma</label>
+                        <select id="turmaSelect" class="form-select" onchange="loadAlunos()">
+                            <option value="">Selecione uma turma</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bimestre</label>
+                        <select id="bimestreSelect" class="form-select">
+                            <option value="1">1º Bimestre</option>
+                            <option value="2">2º Bimestre</option>
+                            <option value="3">3º Bimestre</option>
+                            <option value="4">4º Bimestre</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Notas -->
+            <div id="notasContainer" style="display: none;">
+                <div class="table-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="color: #1e293b;">Alunos da Turma</h3>
+                        <button onclick="salvarNotas()" class="btn-primary">💾 Salvar Todas as Notas</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Matrícula</th>
+                                <th>Nome do Aluno</th>
+                                <th style="width: 150px;">Nota (0-10)</th>
+                                <th>Observação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="notasTable">
+                            <!-- Notas serão inseridas aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state">
+                <div class="empty-icon">📝</div>
+                <h3>Selecione uma turma</h3>
+                <p>Escolha uma turma acima para começar a lançar notas</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/professor-auth.js"></script>
+    <script>
+        let currentUser = null;
+        let turmas = [];
+
+        async function init() {
+            currentUser = await checkProfessorAuth();
+            if (!currentUser) return;
+
+            document.getElementById('userName').textContent = 
+                `${currentUser.first_name} ${currentUser.last_name}`;
+
+            await loadTurmas();
+        }
+
+        async function loadTurmas() {
+            try {
+                const response = await api.getTurmas();
+                turmas = response.results || [];
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+                const select = document.getElementById('turmaSelect');
+                turmas.forEach(turma => {
+                    const option = document.createElement('option');
+                    option.value = turma.id;
+                    option.textContent = `${turma.nome} - ${turma.serie}`;
+                    select.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error('Erro ao carregar turmas:', error);
+                showError('Erro ao carregar turmas');
+            }
+        }
+
+        async function loadAlunos() {
+            const turmaId = document.getElementById('turmaSelect').value;
+            
+            if (!turmaId) {
+                document.getElementById('notasContainer').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+
+            try {
+                const alunos = await api.getAlunosTurma(turmaId);
+                
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('notasContainer').style.display = 'block';
+
+                const tbody = document.getElementById('notasTable');
+                tbody.innerHTML = '';
+
+                if (!alunos || alunos.length === 0) {
+                    tbody.innerHTML = `
+                        <tr><td colspan="4" style="text-align: center; padding: 2rem;">
+                            Nenhum aluno matriculado nesta turma
+                        </td></tr>
+                    `;
+                    return;
+                }
+
+                alunos.forEach(aluno => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${aluno.matricula}</td>
+                        <td>${aluno.usuario.first_name} ${aluno.usuario.last_name}</td>
+                        <td>
+                            <input type="number" 
+                                   class="form-input" 
+                                   id="nota_${aluno.id}" 
+                                   min="0" 
+                                   max="10" 
+                                   step="0.1" 
+                                   placeholder="0.0"
+                                   style="padding: 0.75rem;">
+                        </td>
+                        <td>
+                            <input type="text" 
+                                   class="form-input" 
+                                   id="obs_${aluno.id}" 
+                                   placeholder="Observação (opcional)"
+                                   style="padding: 0.75rem;">
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Erro ao carregar alunos:', error);
+                showError('Erro ao carregar alunos');
+            }
+        }
+
+        async function salvarNotas() {
+            const turmaId = document.getElementById('turmaSelect').value;
+            const bimestre = document.getElementById('bimestreSelect').value;
+
+            if (!turmaId) {
+                showError('Selecione uma turma');
+                return;
+            }
+
+            const tbody = document.getElementById('notasTable');
+            const rows = tbody.querySelectorAll('tr');
+            let notasSalvas = 0;
+
+            for (const row of rows) {
+                const inputs = row.querySelectorAll('input[type="number"]');
+                if (inputs.length > 0) {
+                    const notaInput = inputs[0];
+                    const nota = parseFloat(notaInput.value);
+                    
+                    if (!isNaN(nota) && nota >= 0 && nota <= 10) {
+                        notasSalvas++;
+                        // Aqui você faria a chamada à API para salvar
+                        // await api.createNota({...})
+                    }
+                }
+            }
+
+            if (notasSalvas > 0) {
+                showSuccess(`${notasSalvas} nota(s) salva(s) com sucesso!`);
+                setTimeout(() => loadAlunos(), 1500);
+            } else {
+                showError('Nenhuma nota válida para salvar');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

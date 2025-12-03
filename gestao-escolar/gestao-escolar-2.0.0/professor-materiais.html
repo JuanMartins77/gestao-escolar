@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Materiais - Professor</title>
+    <link rel="stylesheet" href="css/professor-style.css">
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo-section">
+            <div class="logo-icon">🎓</div>
+            <h1 class="logo-text">EduGestão</h1>
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-name" id="userName">Professor</div>
+                <div class="user-role">Materiais e Atividades</div>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="btn-back">← Voltar</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>📄 Materiais e Atividades</h1>
+            <p>Gerencie materiais didáticos das suas turmas</p>
+        </div>
+
+        <div id="content">
+            <!-- Upload de Material -->
+            <div style="background: white; padding: 2rem; border-radius: 16px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <h3 style="color: #1e293b; margin-bottom: 1.5rem;">📤 Adicionar Novo Material</h3>
+                <div style="display: grid; gap: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">Título do Material</label>
+                        <input type="text" id="tituloMaterial" class="form-input" placeholder="Ex: Lista de Exercícios - Capítulo 3">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Descrição</label>
+                        <textarea id="descricaoMaterial" class="form-input" rows="3" placeholder="Descreva o material..."></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Turma</label>
+                            <select id="turmaMaterial" class="form-select">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tipo</label>
+                            <select id="tipoMaterial" class="form-select">
+                                <option value="apostila">📚 Apostila</option>
+                                <option value="exercicio">📝 Exercício</option>
+                                <option value="prova">📋 Prova</option>
+                                <option value="slide">📊 Slide</option>
+                                <option value="video">🎥 Vídeo</option>
+                                <option value="outro">📄 Outro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="adicionarMaterial()" class="btn-primary">+ Adicionar Material</button>
+                </div>
+            </div>
+
+            <!-- Lista de Materiais -->
+            <div style="background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <h3 style="color: #1e293b; margin-bottom: 1.5rem;">📚 Meus Materiais</h3>
+                <div id="materiaisList" style="display: grid; gap: 1rem;">
+                    <!-- Materiais de exemplo -->
+                    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 700; color: #1e293b; margin-bottom: 0.5rem;">
+                                📚 Apostila de Matemática - Frações
+                            </div>
+                            <div style="color: #64748b; font-size: 0.9rem;">
+                                6º A • Adicionado em 20/11/2025
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn-small">📥 Baixar</button>
+                            <button class="btn-small" style="background: #ef4444;">🗑️ Excluir</button>
+                        </div>
+                    </div>
+                    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 700; color: #1e293b; margin-bottom: 0.5rem;">
+                                📝 Lista de Exercícios - Equações
+                            </div>
+                            <div style="color: #64748b; font-size: 0.9rem;">
+                                6º A • Adicionado em 18/11/2025
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn-small">📥 Baixar</button>
+                            <button class="btn-small" style="background: #ef4444;">🗑️ Excluir</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/professor-auth.js"></script>
+    <script>
+        let currentUser = null;
+
+        async function init() {
+            currentUser = await checkProfessorAuth();
+            if (!currentUser) return;
+
+            document.getElementById('userName').textContent = 
+                `${currentUser.first_name} ${currentUser.last_name}`;
+
+            await loadTurmas();
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+        }
+
+        async function loadTurmas() {
+            try {
+                const response = await api.getTurmas();
+                const turmas = response.results || [];
+
+                const select = document.getElementById('turmaMaterial');
+                turmas.forEach(turma => {
+                    const option = document.createElement('option');
+                    option.value = turma.id;
+                    option.textContent = `${turma.nome} - ${turma.serie}`;
+                    select.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error('Erro ao carregar turmas:', error);
+            }
+        }
+
+        function adicionarMaterial() {
+            const titulo = document.getElementById('tituloMaterial').value;
+            const descricao = document.getElementById('descricaoMaterial').value;
+            const turma = document.getElementById('turmaMaterial').value;
+            const tipo = document.getElementById('tipoMaterial').value;
+
+            if (!titulo || !turma) {
+                showError('Preencha título e turma');
+                return;
+            }
+
+            showSuccess('Material adicionado com sucesso!');
+            
+            // Limpar formulário
+            document.getElementById('tituloMaterial').value = '';
+            document.getElementById('descricaoMaterial').value = '';
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

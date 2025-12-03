@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boletim - Responsável</title>
+    <link rel="stylesheet" href="css/resp-style.css">
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo-section">
+            <div class="logo-icon">🎓</div>
+            <h1 class="logo-text">EduGestão</h1>
+        </div>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-name" id="userName">Responsável</div>
+                <div class="user-role">Boletim do Aluno</div>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="btn-back">← Voltar</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>📋 Boletim Escolar</h1>
+            <p>Acompanhe o desempenho do seu filho(a)</p>
+        </div>
+
+        <div class="card">
+            <h3>Selecione o Aluno</h3>
+            <select id="alunoSelect" class="form-select" style="margin-top: 1rem;">
+                <option value="">Carregando...</option>
+            </select>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="mediaGeral">0.0</div>
+                <div class="stat-label">Média Geral</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="frequencia">0%</div>
+                <div class="stat-label">Frequência</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="faltas">0</div>
+                <div class="stat-label">Faltas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="situacao">-</div>
+                <div class="stat-label">Situação</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <h3 style="margin-bottom: 1rem;">Notas por Disciplina</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Disciplina</th>
+                        <th>1º Bim</th>
+                        <th>2º Bim</th>
+                        <th>3º Bim</th>
+                        <th>4º Bim</th>
+                        <th>Média</th>
+                        <th>Situação</th>
+                    </tr>
+                </thead>
+                <tbody id="notasTable">
+                    <tr><td colspan="7" class="loading">Selecione um aluno</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/resp-auth.js"></script>
+    <script>
+        let currentUser = null;
+
+        async function init() {
+            currentUser = await checkRespAuth();
+            if (!currentUser) return;
+            document.getElementById('userName').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
+            loadAlunos();
+        }
+
+        function loadAlunos() {
+            const select = document.getElementById('alunoSelect');
+            select.innerHTML = '<option value="">Nenhum aluno vinculado</option>';
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
