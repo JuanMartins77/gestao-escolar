@@ -1,5 +1,6 @@
 // Sistema de Cadastro
-const API_URL = 'http://localhost:5000/api';
+const API_URL = window.API_CONFIG ? window.API_CONFIG.BASE_URL : 'http://localhost:5000/api';
+const USE_OFFLINE = true; // Forçar modo offline por enquanto
 
 class RegisterManager {
     constructor() {
@@ -128,24 +129,36 @@ class RegisterManager {
         this.setLoading(true);
 
         try {
-            const response = await fetch(`${API_URL}/auth/register`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
+            // Usar modo offline
+            if (USE_OFFLINE && window.offlineStorage) {
+                // Verificar se email já existe
+                const usuarios = window.offlineStorage.getAll('usuarios');
+                const emailExists = usuarios.some(u => u.email === email);
+                const cpfExists = usuarios.some(u => u.cpf === cpf);
+                
+                if (emailExists) {
+                    this.showAlert('⚠️ Este e-mail já está cadastrado.', 'error');
+                    this.setLoading(false);
+                    return;
+                }
+                
+                if (cpfExists) {
+                    this.showAlert('⚠️ Este CPF já está cadastrado.', 'error');
+                    this.setLoading(false);
+                    return;
+                }
+                
+                // Criar novo usuário
+                const novoUsuario = window.offlineStorage.create('usuarios', {
                     nome: nome,
                     email: email,
                     cpf: cpf,
                     telefone: telefone,
                     cargo: cargo,
-                    senha: password
-                })
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
+                    senha: password,
+                    status: 'ativo'
+                });
+                
                 this.showAlert('✅ Conta criada com sucesso! Redirecionando para o login...', 'success');
                 
                 // Redirecionar para login após 2 segundos
@@ -153,18 +166,38 @@ class RegisterManager {
                     window.location.href = 'index.html';
                 }, 2000);
             } else {
-                const errorMsg = result.error || 'Erro ao criar conta. Tente novamente.';
-                
-                // Mensagem mais amigável para erros comuns
-                if (errorMsg.includes('já está cadastrado')) {
-                    this.showAlert('⚠️ ' + errorMsg, 'error');
+                // Tentar API online
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        nome: nome,
+                        email: email,
+                        cpf: cpf,
+                        telefone: telefone,
+                        cargo: cargo,
+                        senha: password
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    this.showAlert('✅ Conta criada com sucesso! Redirecionando para o login...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
                 } else {
+                    const errorMsg = result.error || 'Erro ao criar conta. Tente novamente.';
                     this.showAlert('❌ ' + errorMsg, 'error');
                 }
             }
         } catch (error) {
             console.error('Erro ao criar conta:', error);
-            this.showAlert('Erro de conexão. Verifique se o servidor está rodando.', 'error');
+            this.showAlert('Erro de conexão. Usando modo offline.', 'warning');
         }
 
         this.setLoading(false);
